@@ -7,32 +7,67 @@ class BootScene extends Phaser.Scene {
   }
 }
 
-// O navegador só libera som depois do primeiro toque/clique.
-document.addEventListener('pointerdown', () => Sound.unlock());
-
-window.game = new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: 'game',
-  width: W * RES,
-  height: H * RES,
-  backgroundColor: '#0d1b3e',
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    // a página inteira vai para tela cheia, assim a tela de jogadores continua aparecendo
-    fullscreenTarget: document.documentElement,
-  },
-  scene: [BootScene, MenuScene, SelectScene, MatchScene, ResultScene],
-});
-
-// ---------- Tela cheia e paisagem ----------
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches;
 const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 // Aberto pelo ícone da tela de início: já está sem as barras do navegador.
 const IS_APP = navigator.standalone === true || matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+const LANDSCAPE = matchMedia('(orientation: landscape)');
 
+// O navegador só libera som depois do primeiro toque/clique.
+document.addEventListener('pointerdown', () => Sound.unlock());
+
+let gameStarted = false;
+
+function startGame() {
+  if (gameStarted) return;
+  gameStarted = true;
+  window.game = new Phaser.Game({
+    type: Phaser.AUTO,
+    parent: 'game',
+    width: W * RES,
+    height: H * RES,
+    backgroundColor: '#0d1b3e',
+    scale: {
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH,
+      // a página inteira vai para tela cheia, assim a tela de jogadores continua aparecendo
+      fullscreenTarget: document.documentElement,
+    },
+    scene: [BootScene, MenuScene, SelectScene, MatchScene, ResultScene],
+  });
+
+  // Em tela cheia, trava a tela deitada (funciona no Android; o iPhone não permite).
+  game.scale.on('enterfullscreen', () => {
+    try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* sem suporte */ }
+  });
+}
+
+// No iPhone, se o jogo começar com o celular em pé, ele fica esticado depois de girar.
+// Então lá o jogo só é criado quando o celular estiver deitado (até lá aparece o aviso de girar).
+if (IS_IOS && IS_TOUCH && !LANDSCAPE.matches) {
+  const waitLandscape = () => {
+    if (!LANDSCAPE.matches) return;
+    LANDSCAPE.removeEventListener('change', waitLandscape);
+    setTimeout(startGame, 400);
+  };
+  LANDSCAPE.addEventListener('change', waitLandscape);
+} else {
+  startGame();
+}
+
+// Depois de girar, o iPhone demora para informar o tamanho certo da tela:
+// reajusta o jogo algumas vezes em seguida.
+function refit() {
+  window.scrollTo(0, 0);
+  [100, 400, 900].forEach(ms => setTimeout(() => gameStarted && game.scale.refresh(), ms));
+}
+window.addEventListener('orientationchange', refit);
+window.addEventListener('resize', refit);
+if (window.visualViewport) visualViewport.addEventListener('resize', refit);
+
+// ---------- Tela cheia ----------
 function enterFullscreen() {
-  if (game.scale.fullscreen.available && !game.scale.isFullscreen) game.scale.startFullscreen();
+  if (gameStarted && game.scale.fullscreen.available && !game.scale.isFullscreen) game.scale.startFullscreen();
 }
 
 function toggleFullscreen() {
@@ -55,14 +90,6 @@ document.getElementById('tip-ok').onclick = () => {
   document.getElementById('tip').classList.add('hidden');
   game.input.enabled = true;
 };
-
-// O iPhone às vezes informa o tamanho antigo logo depois de girar; reajusta com calma.
-window.addEventListener('orientationchange', () => setTimeout(() => game.scale.refresh(), 300));
-
-// Em tela cheia, trava a tela deitada (funciona no Android; o iPhone não permite).
-game.scale.on('enterfullscreen', () => {
-  try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* sem suporte */ }
-});
 
 // No celular, qualquer toque no jogo volta para tela cheia.
 if (IS_TOUCH) {
