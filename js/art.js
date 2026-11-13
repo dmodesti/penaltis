@@ -118,45 +118,32 @@ const Art = {
     g.destroy();
   },
 
-  // Corpo do jogador (batedor ou goleiro) na cor da camisa.
-  bodyKey(scene, color, keeper) {
-    const key = 'body_' + color + (keeper ? '_k' : '');
+  // Corpo do jogador numa pose, na cor da camisa (desenho em js/body.js).
+  bodyKey(scene, color, pose, keeper) {
+    const key = `body_${color}_${pose}${keeper ? '_k' : ''}`;
     if (scene.textures.exists(key)) return key;
-    const w = keeper ? 180 : 120, h = keeper ? 190 : 150, top = keeper ? 50 : 10, cx = w / 2;
     const g = Art.texGraphics(scene);
-    // pernas, meiões, chuteiras
-    g.fillStyle(SKIN); g.fillRect(cx - 20, top + 80, 14, 32); g.fillRect(cx + 6, top + 80, 14, 32);
-    g.fillStyle(color); g.fillRect(cx - 21, top + 108, 16, 22); g.fillRect(cx + 5, top + 108, 16, 22);
-    g.fillStyle(0x111111); g.fillEllipse(cx - 14, top + 132, 24, 12); g.fillEllipse(cx + 14, top + 132, 24, 12);
-    // calção
-    g.fillStyle(keeper ? 0x222222 : 0xffffff); g.fillRoundedRect(cx - 26, top + 64, 52, 26, 6);
-    // braços
-    if (keeper) {
-      g.lineStyle(14, color);
-      g.lineBetween(cx - 24, top + 12, cx - 62, top - 28);
-      g.lineBetween(cx + 24, top + 12, cx + 62, top - 28);
-      g.fillStyle(0xfafafa); g.fillCircle(cx - 66, top - 33, 12); g.fillCircle(cx + 66, top - 33, 12);
-      g.lineStyle(3, 0x00c853); g.strokeCircle(cx - 66, top - 33, 12); g.strokeCircle(cx + 66, top - 33, 12);
-    } else {
-      g.fillStyle(color); g.fillRoundedRect(cx - 42, top + 4, 14, 44, 6); g.fillRoundedRect(cx + 28, top + 4, 14, 44, 6);
-      g.fillStyle(SKIN); g.fillCircle(cx - 35, top + 54, 7); g.fillCircle(cx + 35, top + 54, 7);
-    }
-    // camisa
-    g.fillStyle(color); g.fillRoundedRect(cx - 30, top, 60, 70, 12);
-    g.lineStyle(2, 0x000000, 0.25); g.strokeRoundedRect(cx - 30, top, 60, 70, 12);
-    g.fillStyle(color === 0xffffff ? 0x222222 : 0xffffff, 0.9); g.fillRect(cx - 8, top, 16, 6);
-    g.generateTexture(key, w * TEX, h * TEX);
+    drawBody(g, BODY.ox, BODY.oy, POSES[pose], color, keeper);
+    g.generateTexture(key, BODY.w * TEX, BODY.h * TEX);
     g.destroy();
     return key;
   },
 
   // Jogador completo: corpo + rosto (foto). A origem do container fica nos pés.
+  // c.setPose('stand' | 'run1' | 'run2' | 'kick' | 'cheer' | 'ready' | 'stretch') troca a pose.
   player(scene, p, keeper) {
     const c = scene.add.container(0, 0);
-    const body = scene.add.image(0, 0, Art.bodyKey(scene, p.color, keeper)).setOrigin(0.5, 1).setScale(1 / TEX);
-    const head = Art.face(scene, 0, -172, p, 76, keeper ? 0x00c853 : 0xffffff);
+    if (!keeper) c.add(scene.add.ellipse(0, 2, 74, 16, 0x000000, 0.25));
+    const body = scene.add.image(0, 0, '__DEFAULT').setOrigin(BODY.ox / BODY.w, BODY.oy / BODY.h).setScale(1 / TEX);
+    const head = Art.face(scene, 0, 0, p, 76, keeper ? 0x00c853 : 0xffffff);
     c.add([body, head]);
-    return c;
+    c.setPose = name => {
+      const pose = POSES[name];
+      body.setTexture(Art.bodyKey(scene, p.color, name, keeper));
+      head.setPosition(pose.neck[0], pose.neck[1] - 30);
+      return c;
+    };
+    return c.setPose(keeper ? 'ready' : 'stand');
   },
 
   // Rosto com contorno. Fotos novas têm formato de rosto; fotos antigas (quadradas) ficam redondas.

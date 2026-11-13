@@ -321,11 +321,17 @@ class MatchScene extends Phaser.Scene {
     }
 
     this.setMsg('');
+    // corrida: alterna as duas passadas enquanto vai até a bola
+    let stride = 0;
+    const run = this.time.addEvent({ delay: 90, loop: true, callback: () => this.kicker.setPose(stride++ % 2 ? 'run2' : 'run1') });
+    this.kicker.setPose('run1');
     this.tweens.add({
-      targets: this.kicker, x: 576, y: 662, duration: 420, ease: 'Quad.easeIn',
+      targets: this.kicker, x: 568, y: 662, duration: 420, ease: 'Quad.easeIn',
       onComplete: () => {
+        run.remove();
         Sound.kick();
-        this.tweens.add({ targets: this.kicker, angle: -12, duration: 120, yoyo: true });
+        this.kicker.setPose('kick');
+        this.time.delayedCall(450, () => this.kicker.setPose('stand'));
         if (this.idle) this.idle.stop();
         this.keeper.x = W / 2;
         this.dive(kzone);
@@ -335,10 +341,11 @@ class MatchScene extends Phaser.Scene {
   }
 
   dive(z) {
-    if (!z) {
+    if (!z || (z.col === 1 && z.row === 0)) {
       this.tweens.add({ targets: this.keeper, y: GOAL.bottom - 20, duration: 160, yoyo: true });
       return;
     }
+    this.keeper.setPose('stretch');
     const c = zoneCenter(z);
     const R = 100 * this.keeper.scale;
     const dir = z.col === 0 ? -1 : z.col === 2 ? 1 : 0;

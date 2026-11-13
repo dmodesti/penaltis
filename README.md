@@ -52,7 +52,8 @@ Para atualizar depois, é só subir os arquivos alterados de novo.
 ```
 index.html            página do jogo
 css/style.css         estilo da página e da tela de jogadores
-js/art.js             gráficos desenhados por código (jogadores, bola, gol)
+js/body.js            corpo dos jogadores: esqueleto e poses (parado, correndo, chutando...)
+js/art.js             gráficos desenhados por código (rosto, bola, gol, botões)
 js/scenery.js         cenários: grama, quadra, areia e cimento
 js/sound.js           efeitos sonoros
 js/storage.js         jogadores salvos no navegador

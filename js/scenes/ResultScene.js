@@ -33,6 +33,8 @@ class ResultScene extends Phaser.Scene {
 
     const hero = Art.player(this, champ, false).setPosition(W / 2, 600).setScale(1.25);
     this.tweens.add({ targets: hero, y: 570, duration: 350, yoyo: true, repeat: -1, ease: 'Quad.easeOut' });
+    let up = false;
+    this.time.addEvent({ delay: 350, loop: true, callback: () => hero.setPose((up = !up) ? 'cheer' : 'stand') });
 
     Art.button(this, 250, 660, 'Jogar de novo', () => this.scene.start('Match', { mode, a, b, diff: this.d.diff }), { w: 360, h: 70 });
     Art.button(this, 1030, 660, 'Menu', () => this.scene.start('Menu'), { w: 260, h: 70, color: 0xffffff });
