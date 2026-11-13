@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1b3e">
+  <title>Pênaltis em Família</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game"></div>
+
+  <!-- Tela de cadastro de jogadores (HTML por cima do jogo) -->
+  <div id="players-ui" class="hidden">
+    <div class="panel">
+      <h2>Jogadores</h2>
+      <div id="pl-list"></div>
+      <button id="pl-new" class="btn primary">+ Novo jogador</button>
+
+      <div id="pl-form" class="hidden">
+        <label class="field">Nome
+          <input id="pl-name" maxlength="14" autocomplete="off" placeholder="Ex.: Papai">
+        </label>
+        <div class="field">Cor da camisa</div>
+        <div id="pl-colors"></div>
+
+        <div class="photo-row">
+          <label class="btn">📷 Escolher foto
+            <input type="file" id="pl-file" accept="image/*" hidden>
+          </label>
+          <button id="pl-nophoto" class="btn">Sem foto</button>
+        </div>
+
+        <div id="crop-wrap" class="hidden">
+          <canvas id="crop" width="280" height="280"></canvas>
+          <input type="range" id="crop-zoom" min="1" max="4" step="0.01" value="1">
+          <small>Arraste a foto para colocar o rosto dentro do círculo e use a barra para dar zoom.</small>
+        </div>
+
+        <div class="row">
+          <button id="pl-save" class="btn primary">Salvar</button>
+          <button id="pl-cancel" class="btn">Cancelar</button>
+        </div>
+      </div>
+
+      <button id="pl-close" class="btn">Voltar ao jogo</button>
+    </div>
+  </div>
+
+  <div id="rotate">Gire o celular para jogar deitado 📱↻</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/playersUI.js"></script>
+  <script src="js/scenes/MenuScene.js"></script>
+  <script src="js/scenes/SelectScene.js"></script>
+  <script src="js/scenes/MatchScene.js"></script>
+  <script src="js/scenes/ResultScene.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
