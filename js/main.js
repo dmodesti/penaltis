@@ -56,6 +56,9 @@ document.getElementById('tip-ok').onclick = () => {
   game.input.enabled = true;
 };
 
+// O iPhone às vezes informa o tamanho antigo logo depois de girar; reajusta com calma.
+window.addEventListener('orientationchange', () => setTimeout(() => game.scale.refresh(), 300));
+
 // Em tela cheia, trava a tela deitada (funciona no Android; o iPhone não permite).
 game.scale.on('enterfullscreen', () => {
   try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* sem suporte */ }
