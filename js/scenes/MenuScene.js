@@ -20,7 +20,7 @@ class MenuScene extends Phaser.Scene {
       snd.label.setText(Sound.toggle() ? 'Som: não' : 'Som: sim');
     }, { w: 180, h: 56, size: 22, color: 0xffffff });
 
-    if (this.scale.fullscreen.available) {
+    if (!IS_APP) {
       Art.button(this, 120, 670, 'Tela cheia', toggleFullscreen, { w: 200, h: 56, size: 22, color: 0xffffff, onUp: true });
     }
   }

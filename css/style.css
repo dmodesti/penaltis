@@ -125,3 +125,13 @@ html, body {
   #rotate { display: flex; }
 }
 #rotate small { display: block; margin-top: 10px; font-size: 16px; font-weight: 400; opacity: .8; }
+
+/* ---------- Dica de tela cheia ---------- */
+#tip {
+  position: fixed; inset: 0; z-index: 15;
+  background: rgba(5, 12, 30, 0.88);
+  display: flex; align-items: safe center; justify-content: center;
+  overflow-y: auto;
+  padding: 16px; box-sizing: border-box;
+}
+#tip p { margin: 0; font-size: 17px; line-height: 1.45; }

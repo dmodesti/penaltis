@@ -48,7 +48,7 @@ class MatchScene extends Phaser.Scene {
     this.buildZones();
 
     Art.button(this, 70, 46, 'Sair', () => this.scene.start('Menu'), { w: 110, h: 50, size: 22, color: 0xffffff });
-    if (this.scale.fullscreen.available) {
+    if (!IS_APP) {
       Art.button(this, 1185, 46, 'Tela cheia', toggleFullscreen, { w: 160, h: 50, size: 20, color: 0xffffff, onUp: true });
     }
 
