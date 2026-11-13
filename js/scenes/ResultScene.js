@@ -9,6 +9,7 @@ class ResultScene extends Phaser.Scene {
     const champ = teams[winner];
     const goals = kicks.map(k => k.filter(Boolean).length);
 
+    Art.setupCamera(this);
     Art.drawStadium(this);
     Art.drawGoal(this);
     Art.dim(this, 0.6);

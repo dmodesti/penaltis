@@ -13,6 +13,7 @@ class SelectScene extends Phaser.Scene {
   }
 
   create() {
+    Art.setupCamera(this);
     Art.drawStadium(this);
     Art.dim(this, 0.7);
     this.title = this.add.text(W / 2, 70, '', textStyle(44, '#ffc107')).setOrigin(0.5);

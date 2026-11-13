@@ -32,11 +32,12 @@ class MatchScene extends Phaser.Scene {
   }
 
   create() {
+    Art.setupCamera(this);
     Art.drawStadium(this);
     this.net = Art.drawGoal(this);
 
     this.ballShadow = this.add.ellipse(SPOT.x, SPOT.y + 18, 40, 12, 0x000000, 0.3).setDepth(19);
-    this.ball = this.add.image(SPOT.x, SPOT.y, 'ball').setDepth(20);
+    this.ball = Art.ball(this, SPOT.x, SPOT.y).setDepth(20);
     this.aimG = this.add.graphics().setDepth(30);
     this.timerG = this.add.graphics().setDepth(41);
     this.hint = this.add.circle(SPOT.x, SPOT.y, 18, 0xffffff, 0.7).setDepth(31).setVisible(false);
@@ -47,14 +48,20 @@ class MatchScene extends Phaser.Scene {
     this.buildZones();
 
     Art.button(this, 70, 46, 'Sair', () => this.scene.start('Menu'), { w: 110, h: 50, size: 22, color: 0xffffff });
+    if (this.scale.fullscreen.available) {
+      Art.button(this, 1185, 46, 'Tela cheia', toggleFullscreen, { w: 160, h: 50, size: 20, color: 0xffffff, onUp: true });
+    }
 
-    this.input.on('pointerdown', p => this.onDown(p));
-    this.input.on('pointermove', p => this.onMove(p));
-    this.input.on('pointerup', p => this.onUp(p));
+    this.input.on('pointerdown', p => this.onDown(this.world(p)));
+    this.input.on('pointermove', p => this.onMove(this.world(p)));
+    this.input.on('pointerup', p => this.onUp(this.world(p)));
 
     Sound.whistle();
     this.time.delayedCall(500, () => this.startTurn());
   }
+
+  // Posição do toque nas coordenadas do jogo (a câmera tem zoom).
+  world(p) { return { x: p.worldX, y: p.worldY }; }
 
   isHuman(team) { return this.mode === '2p' || team === 0; }
 
@@ -70,7 +77,7 @@ class MatchScene extends Phaser.Scene {
       this.add.circle(fx, 47, 31, p.color).setDepth(50);
       this.add.image(fx, 47, faceKey(this, p)).setDisplaySize(56, 56).setDepth(50);
       const nx = side === 0 ? 272 : 1008;
-      const t = this.add.text(nx, 30, p.name, { fontFamily: FONT, fontSize: '22px', color: '#ffffff' })
+      const t = this.add.text(nx, 30, p.name, { fontFamily: FONT, fontSize: '22px', color: '#ffffff', resolution: RES })
         .setOrigin(side === 0 ? 0 : 1, 0.5).setDepth(50);
       this.sbNames.push(t);
     });

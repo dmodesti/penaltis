@@ -124,3 +124,4 @@ html, body {
 @media (orientation: portrait) and (pointer: coarse) {
   #rotate { display: flex; }
 }
+#rotate small { display: block; margin-top: 10px; font-size: 16px; font-weight: 400; opacity: .8; }

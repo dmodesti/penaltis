@@ -11,8 +11,14 @@ const FONT = '"Arial Black", "Arial Bold", Arial, sans-serif';
 const SHIRT_COLORS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xfb8c00, 0x212121, 0xffffff];
 const SKIN = 0xe0ac69;
 
+// O jogo é pensado em 1280x720, mas o canvas é criado RES vezes maior em telas grandes/de alta
+// densidade (a câmera dá zoom), para textos e botões continuarem nítidos em tela cheia.
+const RES = Math.min(2, Math.max(1, Math.max(screen.width, screen.height) * (window.devicePixelRatio || 1) / W));
+// As texturas desenhadas por código são geradas TEX vezes maiores e exibidas reduzidas.
+const TEX = 2;
+
 function textStyle(size, color = '#ffffff') {
-  return { fontFamily: FONT, fontSize: size + 'px', color, stroke: '#000000', strokeThickness: Math.max(3, Math.round(size / 7)), align: 'center' };
+  return { fontFamily: FONT, fontSize: size + 'px', color, stroke: '#000000', strokeThickness: Math.max(3, Math.round(size / 7)), align: 'center', resolution: RES };
 }
 
 // Carrega as fotos dos jogadores como texturas ('face_<id>').
@@ -35,9 +41,28 @@ function faceKey(scene, p) {
 }
 
 const Art = {
+  // Cada cena chama isto: a câmera mostra o mundo 1280x720 no canvas em alta resolução.
+  setupCamera(scene) {
+    scene.cameras.main.setZoom(RES).centerOn(W / 2, H / 2);
+  },
+
+  // Graphics que desenha em escala TEX, para gerar texturas nítidas.
+  texGraphics(scene) {
+    const g = scene.make.graphics({ add: false });
+    g.scaleCanvas(TEX, TEX);
+    return g;
+  },
+
+  // Bola: container com a imagem reduzida, para poder escalar/girar como uma imagem normal.
+  ball(scene, x, y) {
+    const c = scene.add.container(x, y);
+    c.add(scene.add.image(0, 0, 'ball').setScale(1 / TEX));
+    return c;
+  },
+
   makeBase(scene) {
     // Bola
-    let g = scene.make.graphics({ add: false });
+    let g = Art.texGraphics(scene);
     g.fillStyle(0xffffff); g.fillCircle(24, 24, 22);
     g.fillStyle(0x111111);
     const pent = (cx, cy, r, rot) => {
@@ -54,27 +79,27 @@ const Art = {
       pent(24 + Math.cos(a) * 18, 24 + Math.sin(a) * 18, 5, a + Math.PI);
     }
     g.lineStyle(2, 0x222222); g.strokeCircle(24, 24, 22);
-    g.generateTexture('ball', 48, 48);
+    g.generateTexture('ball', 48 * TEX, 48 * TEX);
     g.destroy();
 
     // Rosto padrão (sem foto)
-    g = scene.make.graphics({ add: false });
+    g = Art.texGraphics(scene);
     g.fillStyle(0x4e342e); g.fillCircle(64, 64, 64);
     g.fillStyle(SKIN); g.fillEllipse(64, 76, 108, 100);
     g.fillStyle(0x111111); g.fillCircle(44, 68, 7); g.fillCircle(84, 68, 7);
     g.lineStyle(6, 0x6d3b1e);
     g.beginPath(); g.arc(64, 82, 22, 0.2 * Math.PI, 0.8 * Math.PI); g.strokePath();
-    g.generateTexture('face_default', 128, 128);
+    g.generateTexture('face_default', 128 * TEX, 128 * TEX);
     g.destroy();
 
     // Rosto do computador (robô)
-    g = scene.make.graphics({ add: false });
+    g = Art.texGraphics(scene);
     g.fillStyle(0x90a4ae); g.fillCircle(64, 64, 64);
     g.fillStyle(0x37474f); g.fillRoundedRect(22, 40, 84, 40, 14);
     g.fillStyle(0x00e5ff); g.fillCircle(46, 60, 10); g.fillCircle(82, 60, 10);
     g.fillStyle(0x37474f);
     for (let i = 0; i < 5; i++) g.fillRect(36 + i * 12, 92, 8, 12);
-    g.generateTexture('face_robot', 128, 128);
+    g.generateTexture('face_robot', 128 * TEX, 128 * TEX);
     g.destroy();
   },
 
@@ -83,7 +108,7 @@ const Art = {
     const key = 'body_' + color + (keeper ? '_k' : '');
     if (scene.textures.exists(key)) return key;
     const w = keeper ? 180 : 120, h = keeper ? 190 : 150, top = keeper ? 50 : 10, cx = w / 2;
-    const g = scene.make.graphics({ add: false });
+    const g = Art.texGraphics(scene);
     // pernas, meiões, chuteiras
     g.fillStyle(SKIN); g.fillRect(cx - 20, top + 80, 14, 32); g.fillRect(cx + 6, top + 80, 14, 32);
     g.fillStyle(color); g.fillRect(cx - 21, top + 108, 16, 22); g.fillRect(cx + 5, top + 108, 16, 22);
@@ -105,7 +130,7 @@ const Art = {
     g.fillStyle(color); g.fillRoundedRect(cx - 30, top, 60, 70, 12);
     g.lineStyle(2, 0x000000, 0.25); g.strokeRoundedRect(cx - 30, top, 60, 70, 12);
     g.fillStyle(color === 0xffffff ? 0x222222 : 0xffffff, 0.9); g.fillRect(cx - 8, top, 16, 6);
-    g.generateTexture(key, w, h);
+    g.generateTexture(key, w * TEX, h * TEX);
     g.destroy();
     return key;
   },
@@ -113,7 +138,7 @@ const Art = {
   // Jogador completo: corpo + rosto (foto). A origem do container fica nos pés.
   player(scene, p, keeper) {
     const c = scene.add.container(0, 0);
-    const body = scene.add.image(0, 0, Art.bodyKey(scene, p.color, keeper)).setOrigin(0.5, 1);
+    const body = scene.add.image(0, 0, Art.bodyKey(scene, p.color, keeper)).setOrigin(0.5, 1).setScale(1 / TEX);
     const ring = scene.add.circle(0, -166, 35, keeper ? 0x00c853 : 0xffffff);
     const head = scene.add.image(0, -166, faceKey(scene, p)).setDisplaySize(64, 64);
     c.add([body, ring, head]);
@@ -137,7 +162,7 @@ const Art = {
     g.fillStyle(0x0b5394); g.fillRect(0, 330, W, 40);
     g.fillStyle(0xffc107); g.fillRect(0, 330, W, 4);
     for (let x = 80; x < W; x += 320) {
-      scene.add.text(x, 350, 'PÊNALTIS FC', { fontFamily: FONT, fontSize: '20px', color: '#ffffff' }).setOrigin(0.5).setAlpha(0.85);
+      scene.add.text(x, 350, 'PÊNALTIS FC', { fontFamily: FONT, fontSize: '20px', color: '#ffffff', resolution: RES }).setOrigin(0.5).setAlpha(0.85);
     }
     // gramado listrado
     let y = 370, hBand = 22, i = 0;
@@ -187,14 +212,15 @@ const Art = {
     g.fillStyle(0x000000, 0.35); g.fillRoundedRect(-w / 2 + 4, -h / 2 + 6, w, h, 18);
     g.fillStyle(color); g.fillRoundedRect(-w / 2, -h / 2, w, h, 18);
     g.lineStyle(4, 0x000000, 0.6); g.strokeRoundedRect(-w / 2, -h / 2, w, h, 18);
-    const t = scene.add.text(0, 0, label, { fontFamily: FONT, fontSize: size + 'px', color: opts.textColor || '#1a1a1a' }).setOrigin(0.5);
+    const t = scene.add.text(0, 0, label, { fontFamily: FONT, fontSize: size + 'px', color: opts.textColor || '#1a1a1a', resolution: RES }).setOrigin(0.5);
     c.add([g, t]);
     c.label = t;
     c.setSize(w, h);
     c.setInteractive({ useHandCursor: true });
     c.on('pointerover', () => c.setScale(1.05));
     c.on('pointerout', () => c.setScale(1));
-    c.on('pointerdown', () => { Sound.click(); cb(); });
+    // Tela cheia só pode ser pedida ao soltar o dedo (regra dos navegadores), por isso opts.onUp.
+    c.on(opts.onUp ? 'pointerup' : 'pointerdown', () => { Sound.click(); cb(); });
     return c;
   },
 
