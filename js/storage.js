@@ -23,6 +23,19 @@ const Storage = {
   remove(id) {
     this.save(this.load().filter(p => p.id !== id));
   },
+
+  // Cenário escolhido: 'grass', 'court', 'sand' ou 'street'.
+  getScenery() {
+    try {
+      return localStorage.getItem('penaltis_scenery') || 'grass';
+    } catch (e) {
+      return 'grass';
+    }
+  },
+
+  setScenery(id) {
+    try { localStorage.setItem('penaltis_scenery', id); } catch (e) { /* só não lembra da escolha */ }
+  },
 };
 
 // Jogadores fixos, sempre disponíveis.

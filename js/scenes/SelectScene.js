@@ -59,11 +59,10 @@ class SelectScene extends Phaser.Scene {
         g.strokeRoundedRect(-cw / 2, -ch / 2, cw, ch, 16);
       };
       draw(false);
-      const ring = this.add.circle(0, -22, 54, p.color);
-      const face = this.add.image(0, -22, faceKey(this, p)).setDisplaySize(100, 100);
+      const face = Art.face(this, 0, -22, p, 120, p.color);
       const name = this.add.text(0, 66, p.name, textStyle(22)).setOrigin(0.5);
       if (name.width > cw - 12) name.setScale((cw - 12) / name.width);
-      card.add([g, ring, face, name]);
+      card.add([g, face, name]);
       card.setSize(cw, ch).setInteractive({ useHandCursor: true });
       card.on('pointerover', () => card.setScale(1.05));
       card.on('pointerout', () => card.setScale(1));

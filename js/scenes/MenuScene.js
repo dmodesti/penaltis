@@ -16,6 +16,13 @@ class MenuScene extends Phaser.Scene {
     Art.button(this, W / 2, 480, '2 Jogadores', () => this.scene.start('Select', { mode: '2p' }));
     Art.button(this, W / 2, 580, 'Jogadores e Fotos', () => PlayersUI.open(), { color: 0x42a5f5, textColor: '#ffffff' });
 
+    // Troca de cenário: o fundo do menu já mostra como fica.
+    const cur = Math.max(0, SCENERIES.findIndex(s => s.id === Storage.getScenery()));
+    Art.button(this, W / 2, 670, 'Cenário: ' + SCENERIES[cur].label + '  ▶', () => {
+      Storage.setScenery(SCENERIES[(cur + 1) % SCENERIES.length].id);
+      this.scene.restart();
+    }, { w: 340, h: 56, size: 24, color: 0x66bb6a, textColor: '#ffffff' });
+
     const snd = Art.button(this, 1170, 670, Sound.isMuted() ? 'Som: não' : 'Som: sim', () => {
       snd.label.setText(Sound.toggle() ? 'Som: não' : 'Som: sim');
     }, { w: 180, h: 56, size: 22, color: 0xffffff });

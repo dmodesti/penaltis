@@ -1,15 +1,15 @@
-// Tela HTML para cadastrar jogadores: nome, cor da camisa e foto do rosto recortada em círculo.
+// Tela HTML para cadastrar jogadores: nome, cor da camisa e foto recortada no formato de rosto.
 const PlayersUI = (() => {
   const $ = id => document.getElementById(id);
   const CS = 280;      // tamanho do canvas de recorte
-  const R = 120;       // raio do círculo do rosto no canvas
-  const OUT = 128;     // tamanho final da foto salva
+  const EW = 180, EH = Math.round(EW * FACE.h / FACE.w);  // formato do rosto no canvas de recorte
+  const OUT_W = 128, OUT_H = Math.round(OUT_W * FACE.h / FACE.w);  // tamanho final da foto salva
 
   let onClose = null;
   let editing = null;
   let color = SHIRT_COLORS[0];
   let currentFace = null;
-  let crop = null;     // { img, cx, cy, zoom } — cx/cy = ponto da imagem no centro do círculo
+  let crop = null;     // { img, cx, cy, zoom } — cx/cy = ponto da imagem no centro do rosto
   let cropDirty = false;
 
   const hex = c => '#' + c.toString(16).padStart(6, '0');
@@ -123,7 +123,12 @@ const PlayersUI = (() => {
   }
 
   function cropScale() {
-    return Math.max((2 * R) / crop.img.width, (2 * R) / crop.img.height) * crop.zoom;
+    return Math.max(EW / crop.img.width, EH / crop.img.height) * crop.zoom;
+  }
+
+  function facePath(ctx, cx, cy, w, h) {
+    eggPoints(w, h, 64).forEach((p, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, cx + p.x, cy + p.y));
+    ctx.closePath();
   }
 
   function drawCrop() {
@@ -135,11 +140,11 @@ const PlayersUI = (() => {
     ctx.drawImage(crop.img, CS / 2 - crop.cx * s, CS / 2 - crop.cy * s, crop.img.width * s, crop.img.height * s);
     ctx.beginPath();
     ctx.rect(0, 0, CS, CS);
-    ctx.arc(CS / 2, CS / 2, R, 0, Math.PI * 2);
+    facePath(ctx, CS / 2, CS / 2, EW, EH);
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fill('evenodd');
     ctx.beginPath();
-    ctx.arc(CS / 2, CS / 2, R, 0, Math.PI * 2);
+    facePath(ctx, CS / 2, CS / 2, EW, EH);
     ctx.lineWidth = 3;
     ctx.strokeStyle = '#ffc107';
     ctx.stroke();
@@ -147,13 +152,14 @@ const PlayersUI = (() => {
 
   function exportFace() {
     const out = document.createElement('canvas');
-    out.width = out.height = OUT;
+    out.width = OUT_W;
+    out.height = OUT_H;
     const ctx = out.getContext('2d');
     ctx.beginPath();
-    ctx.arc(OUT / 2, OUT / 2, OUT / 2, 0, Math.PI * 2);
+    facePath(ctx, OUT_W / 2, OUT_H / 2, OUT_W, OUT_H);
     ctx.clip();
-    const s = cropScale() * (OUT / (2 * R));
-    ctx.drawImage(crop.img, OUT / 2 - crop.cx * s, OUT / 2 - crop.cy * s, crop.img.width * s, crop.img.height * s);
+    const s = cropScale() * (OUT_W / EW);
+    ctx.drawImage(crop.img, OUT_W / 2 - crop.cx * s, OUT_H / 2 - crop.cy * s, crop.img.width * s, crop.img.height * s);
     return out.toDataURL('image/png');
   }
 

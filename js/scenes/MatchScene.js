@@ -74,8 +74,7 @@ class MatchScene extends Phaser.Scene {
     this.sbNames = [];
     this.teams.forEach((p, side) => {
       const fx = side === 0 ? 232 : 1048;
-      this.add.circle(fx, 47, 31, p.color).setDepth(50);
-      this.add.image(fx, 47, faceKey(this, p)).setDisplaySize(56, 56).setDepth(50);
+      Art.face(this, fx, 47, p, 66, p.color).setDepth(50);
       const nx = side === 0 ? 272 : 1008;
       const t = this.add.text(nx, 30, p.name, { fontFamily: FONT, fontSize: '22px', color: '#ffffff', resolution: RES })
         .setOrigin(side === 0 ? 0 : 1, 0.5).setDepth(50);

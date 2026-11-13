@@ -6,7 +6,8 @@ Coloque você, seu filho e quem quiser como jogadores, com foto do rosto!
 ## Como jogar
 
 - **Jogadores e Fotos**: crie jogadores com nome, cor da camisa e foto. Arraste a foto para
-  colocar o rosto dentro do círculo e use a barra para dar zoom.
+  encaixar o rosto no contorno (formato de rosto) e use a barra para dar zoom.
+- **Cenário**: no menu, escolha entre Grama, Quadra, Areia e Cimento.
 - **Contra o Computador**: você bate e defende, alternando. Escolha o nível (Fácil / Normal / Difícil).
 - **2 Jogadores**: no mesmo aparelho. O goleiro escolhe o canto em segredo, passa o aparelho, e o batedor chuta.
 
@@ -51,7 +52,8 @@ Para atualizar depois, é só subir os arquivos alterados de novo.
 ```
 index.html            página do jogo
 css/style.css         estilo da página e da tela de jogadores
-js/art.js             gráficos desenhados por código
+js/art.js             gráficos desenhados por código (jogadores, bola, gol)
+js/scenery.js         cenários: grama, quadra, areia e cimento
 js/sound.js           efeitos sonoros
 js/storage.js         jogadores salvos no navegador
 js/playersUI.js       cadastro de jogadores e recorte da foto

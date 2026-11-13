@@ -34,6 +34,20 @@ function loadFaces(scene, players) {
   })));
 }
 
+// Formato do rosto: oval mais estreito no queixo. Usado no recorte da foto e no jogo.
+const FACE = { w: 100, h: 128 };
+function eggPoints(w, h, n = 48) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const t = (i / n) * Math.PI * 2;
+    const c = Math.cos(t);
+    const chin = 1 - 0.28 * Math.pow(Math.max(0, -c), 1.5);
+    pts.push({ x: (w / 2) * Math.sin(t) * chin, y: -(h / 2) * c });
+  }
+  return pts;
+}
+const shift = (pts, dx, dy) => pts.map(p => ({ x: p.x + dx, y: p.y + dy }));
+
 function faceKey(scene, p) {
   const key = 'face_' + p.id;
   if (scene.textures.exists(key)) return key;
@@ -82,24 +96,25 @@ const Art = {
     g.generateTexture('ball', 48 * TEX, 48 * TEX);
     g.destroy();
 
-    // Rosto padrão (sem foto)
+    // Rosto padrão (sem foto), no formato de rosto
+    const fx = FACE.w / 2, fy = FACE.h / 2;
     g = Art.texGraphics(scene);
-    g.fillStyle(0x4e342e); g.fillCircle(64, 64, 64);
-    g.fillStyle(SKIN); g.fillEllipse(64, 76, 108, 100);
-    g.fillStyle(0x111111); g.fillCircle(44, 68, 7); g.fillCircle(84, 68, 7);
-    g.lineStyle(6, 0x6d3b1e);
-    g.beginPath(); g.arc(64, 82, 22, 0.2 * Math.PI, 0.8 * Math.PI); g.strokePath();
-    g.generateTexture('face_default', 128 * TEX, 128 * TEX);
+    g.fillStyle(0x4e342e); g.fillPoints(shift(eggPoints(FACE.w, FACE.h), fx, fy), true);
+    g.fillStyle(SKIN); g.fillPoints(shift(eggPoints(FACE.w * 0.9, FACE.h * 0.8), fx, fy + FACE.h * 0.09), true);
+    g.fillStyle(0x111111); g.fillCircle(fx - 18, fy + 2, 6); g.fillCircle(fx + 18, fy + 2, 6);
+    g.lineStyle(5, 0x6d3b1e);
+    g.beginPath(); g.arc(fx, fy + 22, 16, 0.2 * Math.PI, 0.8 * Math.PI); g.strokePath();
+    g.generateTexture('face_default', FACE.w * TEX, FACE.h * TEX);
     g.destroy();
 
     // Rosto do computador (robô)
     g = Art.texGraphics(scene);
-    g.fillStyle(0x90a4ae); g.fillCircle(64, 64, 64);
-    g.fillStyle(0x37474f); g.fillRoundedRect(22, 40, 84, 40, 14);
-    g.fillStyle(0x00e5ff); g.fillCircle(46, 60, 10); g.fillCircle(82, 60, 10);
+    g.fillStyle(0x90a4ae); g.fillPoints(shift(eggPoints(FACE.w, FACE.h), fx, fy), true);
+    g.fillStyle(0x37474f); g.fillRoundedRect(fx - 38, fy - 20, 76, 36, 12);
+    g.fillStyle(0x00e5ff); g.fillCircle(fx - 18, fy - 2, 9); g.fillCircle(fx + 18, fy - 2, 9);
     g.fillStyle(0x37474f);
-    for (let i = 0; i < 5; i++) g.fillRect(36 + i * 12, 92, 8, 12);
-    g.generateTexture('face_robot', 128 * TEX, 128 * TEX);
+    for (let i = 0; i < 5; i++) g.fillRect(fx - 28 + i * 12, fy + 28, 8, 12);
+    g.generateTexture('face_robot', FACE.w * TEX, FACE.h * TEX);
     g.destroy();
   },
 
@@ -139,44 +154,35 @@ const Art = {
   player(scene, p, keeper) {
     const c = scene.add.container(0, 0);
     const body = scene.add.image(0, 0, Art.bodyKey(scene, p.color, keeper)).setOrigin(0.5, 1).setScale(1 / TEX);
-    const ring = scene.add.circle(0, -166, 35, keeper ? 0x00c853 : 0xffffff);
-    const head = scene.add.image(0, -166, faceKey(scene, p)).setDisplaySize(64, 64);
-    c.add([body, ring, head]);
+    const head = Art.face(scene, 0, -172, p, 76, keeper ? 0x00c853 : 0xffffff);
+    c.add([body, head]);
     return c;
   },
 
+  // Rosto com contorno. Fotos novas têm formato de rosto; fotos antigas (quadradas) ficam redondas.
+  face(scene, x, y, p, height, ringColor) {
+    const c = scene.add.container(x, y);
+    const key = faceKey(scene, p);
+    const src = scene.textures.get(key).getSourceImage();
+    const aspect = src.width / src.height;
+    if (Math.abs(aspect - 1) < 0.05) {
+      const d = height * 0.85;
+      c.add(scene.add.circle(0, 0, d / 2 + 3, ringColor));
+      c.add(scene.add.image(0, 0, key).setDisplaySize(d, d));
+    } else {
+      const w = height * aspect;
+      const ring = scene.add.graphics();
+      ring.fillStyle(ringColor);
+      ring.fillPoints(eggPoints(w + 7, height + 7), true);
+      c.add([ring, scene.add.image(0, 0, key).setDisplaySize(w, height)]);
+    }
+    return c;
+  },
+
+  // Fundo do cenário escolhido (desenhos em js/scenery.js).
   drawStadium(scene) {
     const g = scene.add.graphics();
-    // céu e arquibancada
-    g.fillGradientStyle(0x0d1b3e, 0x0d1b3e, 0x1d3a6e, 0x1d3a6e, 1);
-    g.fillRect(0, 0, W, 120);
-    g.fillStyle(0x1b2333); g.fillRect(0, 90, W, 250);
-    const crowd = [0xe53935, 0xffeb3b, 0x1e88e5, 0xffffff, 0x43a047, 0xfb8c00, 0xf48fb1, 0x8d6e63];
-    for (let i = 0; i < 900; i++) {
-      g.fillStyle(crowd[i % crowd.length], 0.55 + Math.random() * 0.4);
-      g.fillCircle(Math.random() * W, 100 + Math.random() * 228, 3 + Math.random() * 2.5);
-    }
-    // refletores
-    g.fillStyle(0xffffff, 0.08); g.fillCircle(120, 40, 90); g.fillCircle(1160, 40, 90);
-    // placas de publicidade
-    g.fillStyle(0x0b5394); g.fillRect(0, 330, W, 40);
-    g.fillStyle(0xffc107); g.fillRect(0, 330, W, 4);
-    for (let x = 80; x < W; x += 320) {
-      scene.add.text(x, 350, 'PÊNALTIS FC', { fontFamily: FONT, fontSize: '20px', color: '#ffffff', resolution: RES }).setOrigin(0.5).setAlpha(0.85);
-    }
-    // gramado listrado
-    let y = 370, hBand = 22, i = 0;
-    while (y < H) {
-      g.fillStyle(i % 2 ? 0x34901f : 0x3a9d23);
-      g.fillRect(0, y, W, hBand);
-      y += hBand; hBand *= 1.18; i++;
-    }
-    // linhas do campo
-    g.lineStyle(4, 0xffffff, 0.9);
-    g.lineBetween(0, GOAL.bottom, W, GOAL.bottom);
-    g.strokePoints([{ x: 240, y: GOAL.bottom }, { x: 200, y: 460 }, { x: 1080, y: 460 }, { x: 1040, y: GOAL.bottom }]);
-    g.strokePoints([{ x: 60, y: GOAL.bottom }, { x: -40, y: 560 }, { x: 1320, y: 560 }, { x: 1220, y: GOAL.bottom }]);
-    g.fillStyle(0xffffff); g.fillEllipse(SPOT.x, SPOT.y + 16, 22, 8);
+    (Scenery[Storage.getScenery()] || Scenery.grass)(scene, g);
     return g;
   },
 
@@ -202,6 +208,15 @@ const Art = {
     posts.strokePoints([{ x: GOAL.left + 4, y: GOAL.bottom + 4 }, { x: GOAL.left + 4, y: GOAL.top + 4 }, { x: GOAL.right + 4, y: GOAL.top + 4 }, { x: GOAL.right + 4, y: GOAL.bottom + 4 }]);
     posts.lineStyle(12, 0xffffff);
     posts.strokePoints([{ x: GOAL.left, y: GOAL.bottom }, { x: GOAL.left, y: GOAL.top }, { x: GOAL.right, y: GOAL.top }, { x: GOAL.right, y: GOAL.bottom }]);
+    // trave listrada de vermelho na quadra (futsal)
+    if (Storage.getScenery() === 'court') {
+      posts.fillStyle(0xe53935);
+      for (let y = GOAL.top + 20; y < GOAL.bottom; y += 40) {
+        posts.fillRect(GOAL.left - 6, y, 12, 20);
+        posts.fillRect(GOAL.right - 6, y, 12, 20);
+      }
+      for (let x = GOAL.left + 20; x < GOAL.right - 10; x += 40) posts.fillRect(x, GOAL.top - 6, 20, 12);
+    }
     return net;
   },
 
